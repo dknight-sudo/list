@@ -1,18 +1,10 @@
-#include <string.h>
 #include "list.h"
+#include <string.h>
 
 typedef struct __element {
     char *value;
-    struct __element *next;
     struct list_head list;
 } list_ele_t;
-
-typedef struct {
-    list_ele_t *head; /* Linked list of elements */
-    list_ele_t *tail;
-    size_t size;
-    struct list_head list;
-} queue_t;
 
 static list_ele_t *get_middle(struct list_head *list)
 {
@@ -49,18 +41,19 @@ static void list_merge(struct list_head *lhs,
     list_splice_tail(list_empty(lhs) ? rhs : lhs, head);
 }
 
-void list_merge_sort(queue_t *q)
+
+void list_merge_sort(struct list_head *head)
 {
-    if (list_is_singular(&q->list))
+    if (list_is_singular(head))
         return;
 
-    queue_t left;
+    struct list_head left;
     struct list_head sorted;
-    INIT_LIST_HEAD(&left.list);
-    list_cut_position(&left.list, &q->list, &get_middle(&q->list)->list);
+    INIT_LIST_HEAD(&left);
+    list_cut_position(&left, head, &get_middle(head)->list);
     list_merge_sort(&left);
-    list_merge_sort(q);
-    list_merge(&left.list, &q->list, &sorted);
-    INIT_LIST_HEAD(&q->list);
-    list_splice_tail(&sorted, &q->list);
+    list_merge_sort(head);
+    list_merge(&left, head, &sorted);
+    INIT_LIST_HEAD(head);
+    list_splice_tail(&sorted, head);
 }

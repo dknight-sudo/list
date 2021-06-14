@@ -4,11 +4,12 @@
 #include <stdlib.h>
 #include "mergesort.c"
 
-static bool validate(queue_t *q)
+static bool validate(struct list_head *list)
 {
     struct list_head *node;
-    list_for_each (node, &q->list) {
-        if (node->next == &q->list)
+    list_for_each(node, list)
+    {
+        if (node->next == list)
             break;
         if (strcmp(list_entry(node, list_ele_t, list)->value,
                    list_entry(node->next, list_ele_t, list)->value) > 0)
@@ -17,53 +18,34 @@ static bool validate(queue_t *q)
     return true;
 }
 
-static queue_t *q_new()
+void list_free(struct list_head *list)
 {
-    queue_t *q = malloc(sizeof(queue_t));
-    if (!q) return NULL;
-
-    q->head = q->tail = NULL;
-    q->size = 0;
-    INIT_LIST_HEAD(&q->list);
-    return q;
-}
-
-static void q_free(queue_t *q)
-{
-    if (!q) return;
-
-    list_ele_t *current = q->head;
-    while (current) {
-        list_ele_t *tmp = current;
-        current = current->next;
-        free(tmp->value);
-        free(tmp);
+    if(list_empty(list))
+        return;
+    struct list_head *node, *tmp;
+    list_for_each_safe(node, tmp, list)
+    {
+        list_del(node);
+        free(list_entry(node, list_ele_t, list));
     }
-    free(q);
+    
 }
 
-bool q_insert_head(queue_t *q, char *s)
-{
-    if (!q) return false;
 
+bool ele_insert_head(struct list_head *head,char *s)
+{
+    if ( !head)
+        return false;
     list_ele_t *newh = malloc(sizeof(list_ele_t));
     if (!newh)
         return false;
-
     char *new_value = strdup(s);
-    if (!new_value) {
+    if (!new_value){
         free(newh);
         return false;
     }
-
     newh->value = new_value;
-    newh->next = q->head;
-    q->head = newh;
-    if (q->size == 0)
-        q->tail = newh;
-    q->size++;
-    list_add_tail(&newh->list, &q->list);
-
+    list_add_tail(&newh->list, head);
     return true;
 }
 
@@ -75,16 +57,18 @@ int main(void)
         exit(EXIT_FAILURE);
     }
 
-    queue_t *q = q_new();
+    struct list_head head;
+    INIT_LIST_HEAD(&head);
+    struct list_head cur = head;
     char buf[256];
     while (fgets(buf, 256, fp))
-        q_insert_head(q, buf);
+        ele_insert_head(&head, buf);
     fclose(fp);
 
-    list_merge_sort(q);
-    assert(validate(q));
+    list_merge_sort(&head);
+    assert(validate(&head));
 
-    q_free(q);
+    list_free(&head);
 
     return 0;
 }
