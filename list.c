@@ -26,6 +26,7 @@ void list_free(struct list_head *list)
     list_for_each_safe(node, tmp, list)
     {
         list_del(node);
+        free(list_entry(node, list_ele_t, list)->value);
         free(list_entry(node, list_ele_t, list));
     }
     
